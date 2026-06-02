@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>차량 진단 대시보드</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Arial, sans-serif;
+        background: #080a0a;
+        color: #f4f5f2;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        margin: 0;
+        background: #080a0a;
+      }
+
+      button,
+      textarea {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        padding: 22px;
+        background:
+          linear-gradient(180deg, rgba(190, 166, 89, 0.04), transparent 170px),
+          #080a0a;
+      }
+
+      .topbar,
+      .panel,
+      .modal {
+        border: 1px solid #292c2a;
+        background: #111313;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-height: 52px;
+        padding: 0 16px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .brand-mark {
+        color: #e2ca78;
+      }
+
+      .status-badge {
+        border: 1px solid #38564b;
+        padding: 5px 8px;
+        color: #9ed0bb;
+        font-size: 11px;
+      }
+
+      .dashboard {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(260px, 0.7fr);
+        gap: 14px;
+        max-width: 1180px;
+        margin: 18px auto;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel-label,
+      .metric-label,
+      .helper {
+        color: #949b96;
+        font-size: 12px;
+      }
+
+      h1,
+      h2,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        margin-top: 8px;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .metric {
+        min-height: 142px;
+        padding: 14px;
+        border: 1px solid #282b29;
+        background: #181a19;
+      }
+
+      .metric-value {
+        display: block;
+        margin-top: 28px;
+        font-size: 30px;
+      }
+
+      .metric-unit {
+        margin-left: 4px;
+        color: #9ea49f;
+        font-size: 12px;
+      }
+
+      .watch {
+        color: #e4ce7d;
+      }
+
+      .diagnosis-panel {
+        display: flex;
+        min-height: 280px;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .diagnosis-panel h2 {
+        margin-top: 8px;
+        font-size: 18px;
+      }
+
+      .diagnosis-panel p {
+        margin-top: 10px;
+        color: #a4aaa6;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      .primary-button,
+      .secondary-button {
+        min-height: 42px;
+        border: 1px solid #ddc773;
+        padding: 0 16px;
+        background: #ddc773;
+        color: #14150f;
+        font-weight: 700;
+      }
+
+      .primary-button:hover {
+        background: #ead98d;
+      }
+
+      .secondary-button {
+        border-color: #3a3d3a;
+        background: transparent;
+        color: #d9ddda;
+      }
+
+      .overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 18px;
+        background: rgba(0, 0, 0, 0.72);
+      }
+
+      .overlay[hidden] {
+        display: none;
+      }
+
+      .modal {
+        width: min(680px, 100%);
+        padding: 20px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.55);
+      }
+
+      .modal-header {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .modal h2 {
+        font-size: 19px;
+      }
+
+      .modal-description {
+        margin-top: 9px;
+        color: #a7ada9;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .icon-button {
+        display: inline-grid;
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid transparent;
+        background: transparent;
+        color: #d4d8d5;
+        font-size: 22px;
+      }
+
+      .icon-button:hover {
+        border-color: #414541;
+        background: #1b1e1c;
+      }
+
+      .icon-button svg {
+        width: 19px;
+        height: 19px;
+        stroke: currentColor;
+      }
+
+      .input-shell {
+        display: flex;
+        align-items: end;
+        gap: 6px;
+        margin-top: 20px;
+        border: 1px solid #3b3f3c;
+        padding: 7px;
+        background: #1a1c1b;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 70px;
+        border: 0;
+        padding: 8px;
+        resize: vertical;
+        outline: 0;
+        background: transparent;
+        color: #f1f3f1;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      textarea::placeholder {
+        color: #777e79;
+      }
+
+      .mic-button {
+        border-radius: 50%;
+      }
+
+      .mic-button.listening {
+        border-color: #ddc773;
+        background: #ddc773;
+        color: #151610;
+      }
+
+      .modal-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 12px;
+      }
+
+      .stt-status {
+        min-height: 18px;
+        color: #a7ada9;
+        font-size: 12px;
+      }
+
+      .stt-status.error {
+        color: #ef8b83;
+      }
+
+      .actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .result-panel {
+        grid-column: 1 / -1;
+      }
+
+      .result-panel[hidden] {
+        display: none;
+      }
+
+      pre {
+        overflow: auto;
+        margin: 12px 0 0;
+        border: 1px solid #292c2a;
+        padding: 14px;
+        background: #181a19;
+        color: #cdd4cf;
+        font-size: 13px;
+        line-height: 1.55;
+        white-space: pre-wrap;
+      }
+
+      @media (max-width: 760px) {
+        .app-shell {
+          padding: 12px;
+        }
+
+        .dashboard {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics {
+          grid-template-columns: 1fr;
+        }
+
+        .metric {
+          min-height: 100px;
+        }
+
+        .metric-value {
+          margin-top: 16px;
+        }
+
+        .modal-footer {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .actions {
+          justify-content: end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand"><span class="brand-mark">◆</span> AI 차량 진단 시스템</div>
+        <span class="status-badge">SYSTEM ONLINE</span>
+      </header>
+
+      <section class="dashboard" aria-label="차량 상태 대시보드">
+        <article class="panel">
+          <span class="panel-label">Compact Drive View</span>
+          <h1>실시간 차량 상태</h1>
+          <div class="metrics">
+            <div class="metric">
+              <span class="metric-label">SPEED</span>
+              <span class="metric-value">57<span class="metric-unit">km/h</span></span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">ENGINE RPM</span>
+              <span class="metric-value">2818<span class="metric-unit">rpm</span></span>
+            </div>
+            <div class="metric">
+              <span class="metric-label">VEHICLE STATE</span>
+              <span class="metric-value watch">WATCH</span>
+            </div>
+          </div>
+        </article>
+
+        <aside class="panel diagnosis-panel">
+          <div>
+            <span class="panel-label">MANUAL CHECK</span>
+            <h2>체감 이상 수동 진단</h2>
+            <p>냄새처럼 센서만으로 확인하기 어려운 이상 증상을 직접 입력할 수 있습니다.</p>
+          </div>
+          <button class="primary-button" id="openDiagnosisButton" type="button">수동 진단 시작</button>
+        </aside>
+
+        <article class="panel result-panel" id="requestPreview" hidden>
+          <span class="panel-label">BACKEND REQUEST PREVIEW</span>
+          <h2>전송 예정 데이터</h2>
+          <pre id="requestPayload"></pre>
+        </article>
+      </section>
+    </main>
+
+    <div class="overlay" id="diagnosisOverlay" hidden>
+      <section
+        aria-labelledby="diagnosisTitle"
+        aria-modal="true"
+        class="modal"
+        role="dialog"
+      >
+        <header class="modal-header">
+          <div>
+            <h2 id="diagnosisTitle">수동 진단</h2>
+            <p class="modal-description">
+              차량에서 느낀 냄새나 체감 증상을 입력해주세요. 마이크로 말한 내용도 전송 전에 직접 수정할 수 있습니다.
+            </p>
+          </div>
+          <button aria-label="닫기" class="icon-button" id="closeDiagnosisButton" title="닫기" type="button">×</button>
+        </header>
+
+        <div class="input-shell">
+          <textarea
+            aria-label="체감 증상"
+            id="diagnosisInput"
+            placeholder="예: 주행 중에 고무 타는 냄새가 나요."
+          ></textarea>
+          <button
+            aria-label="음성 입력 시작"
+            class="icon-button mic-button"
+            id="micButton"
+            title="음성 입력 시작"
+            type="button"
+          >
+            <svg aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <path d="M12 19v3"></path>
+            </svg>
+          </button>
+        </div>
+
+        <footer class="modal-footer">
+          <div aria-live="polite" class="stt-status" id="sttStatus">직접 입력하거나 마이크 버튼을 눌러주세요.</div>
+          <div class="actions">
+            <button class="secondary-button" id="cancelButton" type="button">취소</button>
+            <button class="primary-button" id="submitButton" type="button">진단 요청</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+
+    <script>
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      const openButton = document.getElementById("openDiagnosisButton");
+      const closeButton = document.getElementById("closeDiagnosisButton");
+      const cancelButton = document.getElementById("cancelButton");
+      const submitButton = document.getElementById("submitButton");
+      const micButton = document.getElementById("micButton");
+      const overlay = document.getElementById("diagnosisOverlay");
+      const input = document.getElementById("diagnosisInput");
+      const status = document.getElementById("sttStatus");
+      const preview = document.getElementById("requestPreview");
+      const payload = document.getElementById("requestPayload");
+
+      let recognition;
+      let isListening = false;
+      let inputMethod = "KEYBOARD";
+      let confirmedText = "";
+      let resetAfterRecognition = false;
+
+      const setStatus = (message, isError = false) => {
+        status.textContent = message;
+        status.classList.toggle("error", isError);
+      };
+
+      const setListening = (nextState) => {
+        isListening = nextState;
+        micButton.classList.toggle("listening", nextState);
+        micButton.setAttribute(
+          "aria-label",
+          nextState ? "음성 입력 중지" : "음성 입력 시작",
+        );
+        micButton.title = nextState ? "음성 입력 중지" : "음성 입력 시작";
+      };
+
+      const openModal = () => {
+        overlay.hidden = false;
+        input.focus();
+      };
+
+      const closeModal = () => {
+        if (isListening) recognition.stop();
+        overlay.hidden = true;
+      };
+
+      const resetInput = () => {
+        input.value = "";
+        inputMethod = "KEYBOARD";
+        confirmedText = "";
+      };
+
+      if (!SpeechRecognition) {
+        micButton.disabled = true;
+        micButton.title = "이 브라우저에서는 음성 입력을 지원하지 않습니다.";
+        setStatus("음성 입력을 지원하지 않는 브라우저입니다. 직접 입력을 이용해주세요.", true);
+      } else {
+        recognition = new SpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+          inputMethod = "STT";
+          confirmedText = input.value;
+          setListening(true);
+          setStatus("듣는 중... 말씀하신 내용이 입력창에 표시됩니다.");
+        };
+
+        recognition.onresult = (event) => {
+          if (resetAfterRecognition) return;
+
+          let finalText = "";
+          let interimText = "";
+
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const transcript = event.results[index][0].transcript;
+            if (event.results[index].isFinal) {
+              finalText += transcript;
+            } else {
+              interimText += transcript;
+            }
+          }
+
+          if (finalText) confirmedText = `${confirmedText} ${finalText}`.trim();
+          input.value = `${confirmedText} ${interimText}`.trim();
+        };
+
+        recognition.onerror = (event) => {
+          const message =
+            event.error === "not-allowed"
+              ? "마이크 권한이 필요합니다. 브라우저 권한을 확인해주세요."
+              : `음성 인식 오류: ${event.error}`;
+          setStatus(message, true);
+        };
+
+        recognition.onend = () => {
+          setListening(false);
+          if (resetAfterRecognition) {
+            resetInput();
+            resetAfterRecognition = false;
+          }
+          if (!status.classList.contains("error")) {
+            setStatus("음성 입력이 끝났습니다. 내용을 확인한 뒤 진단을 요청해주세요.");
+          }
+        };
+
+        micButton.addEventListener("click", () => {
+          if (isListening) {
+            recognition.stop();
+            return;
+          }
+
+          setStatus("마이크 연결을 준비하고 있습니다.");
+          try {
+            recognition.start();
+          } catch (error) {
+            setStatus(`음성 입력 시작 실패: ${error.message}`, true);
+          }
+        });
+      }
+
+      input.addEventListener("input", () => {
+        if (!isListening) inputMethod = "KEYBOARD";
+      });
+
+      submitButton.addEventListener("click", () => {
+        const content = input.value.trim();
+        if (!content) {
+          setStatus("진단할 내용을 먼저 입력해주세요.", true);
+          input.focus();
+          return;
+        }
+
+        const requestBody = {
+          content,
+          inputMethod,
+        };
+
+        payload.textContent = JSON.stringify(requestBody, null, 2);
+        preview.hidden = false;
+        console.log("POST /api/manual-diagnosis", requestBody);
+        resetAfterRecognition = isListening;
+        resetInput();
+        setStatus("직접 입력하거나 마이크 버튼을 눌러주세요.");
+        closeModal();
+      });
+
+      openButton.addEventListener("click", openModal);
+      closeButton.addEventListener("click", closeModal);
+      cancelButton.addEventListener("click", closeModal);
+      overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) closeModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && !overlay.hidden) closeModal();
+      });
+    </script>
+  </body>
+</html>
